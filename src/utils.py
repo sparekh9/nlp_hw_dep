@@ -24,7 +24,7 @@ class DependencyToken:
 
 
 def traverse(rev_head, h, visited):
-    if rev_head.has_key(h):
+    if h in rev_head:
         for d in rev_head[h]:
             if d in visited:
                 return True
@@ -55,7 +55,7 @@ def is_projective(heads):
     for dep1 in range(1, len(heads) + 1):
         head1 = heads[dep1 - 1]
 
-        if rev_head.has_key(dep1):
+        if dep1 in rev_head:
             for d2 in rev_head[dep1]:
                 if (d2 < head1 < dep1) or (d2 > head1 > dep1) and head1 > 0:
                     return False
@@ -95,9 +95,7 @@ def read_conll(fh, test=False):
             if len(tokens) > 1: yield tokens
             tokens = [root]
         else:
-            if line[0] == '#' or '-' in tok[0] or '.' in tok[0]:
-                tokens.append(line.strip())
-            else:
+            if not(line[0] == '#' or '-' in tok[0] or '.' in tok[0]):
                 tokens.append(DependencyToken(int(tok[0]), tok[1], tok[2], tok[3], tok[4], tok[5],
                                              -1 if test else int(tok[6]) if tok[6] != '_' else -1,'_'  if test else tok[7], tok[8], tok[9]))
     if len(tokens) > 1:
