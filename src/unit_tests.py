@@ -5,7 +5,7 @@ from configuration import Configuration
 
 class Tests(unittest.TestCase):
     def test_features(self):
-        sen = [DependencyToken(i, '-', '-', '-', '-') for i in range(11)]
+        sen = [DependencyToken(i, "-", "-", "-", "-") for i in range(11)]
         sen[1].head = 5
         sen[2].head = 3
         sen[3].head = 5
@@ -20,17 +20,16 @@ class Tests(unittest.TestCase):
         i = 0
         while not conf.is_terminal_state():
             act, l = conf.next_gold_action()
-            label = (act + ':' + l) if l else act
+            label = (act + ":" + l) if l else act
             feats = conf.feature_ids()
-            if i==8:
+            if i == 8:
                 assert feats[-2] == 2
                 assert feats[8] == 3
-            if i==11:
+            if i == 11:
                 assert feats[10] == 6
             conf.do(act, l)
-            i+=1
+            i += 1
         assert conf.lm[5] == 1
         assert conf.lm2[5] == 3
         assert conf.rm[5] == 10
         assert conf.rm2[5] == 8
-

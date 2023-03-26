@@ -3,7 +3,19 @@ import re, codecs
 
 
 class DependencyToken:
-    def __init__(self, id, form, lemma, pos, cpos, feats=None, parent_id=None, relation=None, deps=None, misc=None):
+    def __init__(
+        self,
+        id,
+        form,
+        lemma,
+        pos,
+        cpos,
+        feats=None,
+        parent_id=None,
+        relation=None,
+        deps=None,
+        misc=None,
+    ):
         self.id = id
         self.form = form
         self.norm = normalize(form)
@@ -18,9 +30,19 @@ class DependencyToken:
         self.misc = misc
 
     def __str__(self):
-        values = [str(self.id), self.form, self.lemma, self.cpos, self.pos, self.feats,
-                  str(self.head), self.relation, self.deps, self.misc]
-        return u'\t'.join([u'_' if v is None else v for v in values])
+        values = [
+            str(self.id),
+            self.form,
+            self.lemma,
+            self.cpos,
+            self.pos,
+            self.feats,
+            str(self.head),
+            self.relation,
+            self.deps,
+            self.misc,
+        ]
+        return "\t".join(["_" if v is None else v for v in values])
 
 
 def traverse(rev_head, h, visited):
@@ -34,11 +56,11 @@ def traverse(rev_head, h, visited):
 
 
 def is_projective(heads):
-    '''
+    """
     Decides if the set of heads for tree is projective.
     :param heads:
     :return: True if projective, else False.
-    '''
+    """
     rev_head = defaultdict(list)
     for dep1 in range(1, len(heads) + 1):
         head1 = heads[dep1 - 1]
@@ -82,52 +104,67 @@ def is_projective(heads):
 
 
 def read_conll(fh, test=False):
-    '''
+    """
     This function reads a CoNLL file and returns a list of @ConllEntry objects.
     :param fh: file
     :return: a list of @ConllEntry objects
-    '''
-    root = DependencyToken(0, '<root>', '<root>', '<root>', '<root>', '_', -1, 'rroot', '_', '_')
+    """
+    root = DependencyToken(
+        0, "<root>", "<root>", "<root>", "<root>", "_", -1, "rroot", "_", "_"
+    )
     tokens = [root]
-    for line in codecs.open(fh, 'r', encoding='UTF-8'):
-        tok = line.strip().split('\t')
-        if not tok or line.strip() == '':
-            if len(tokens) > 1: yield tokens
+    for line in codecs.open(fh, "r", encoding="UTF-8"):
+        tok = line.strip().split("\t")
+        if not tok or line.strip() == "":
+            if len(tokens) > 1:
+                yield tokens
             tokens = [root]
         else:
-            if not(line[0] == '#' or '-' in tok[0] or '.' in tok[0]):
-                tokens.append(DependencyToken(int(tok[0]), tok[1], tok[2], tok[3], tok[4], tok[5],
-                                             -1 if test else int(tok[6]) if tok[6] != '_' else -1,'_'  if test else tok[7], tok[8], tok[9]))
+            if not (line[0] == "#" or "-" in tok[0] or "." in tok[0]):
+                tokens.append(
+                    DependencyToken(
+                        int(tok[0]),
+                        tok[1],
+                        tok[2],
+                        tok[3],
+                        tok[4],
+                        tok[5],
+                        -1 if test else int(tok[6]) if tok[6] != "_" else -1,
+                        "_" if test else tok[7],
+                        tok[8],
+                        tok[9],
+                    )
+                )
     if len(tokens) > 1:
         yield tokens
 
 
 def write_conll(fn, conll_gen):
-    '''
+    """
     Writes a conll file
     :param fn: output path.
     :param conll_gen: Generator for conll file (a list of @ConllEntry objects).
     :return:
-    '''
-    with codecs.open(fn, 'w', encoding='utf-8') as fh:
+    """
+    with codecs.open(fn, "w", encoding="utf-8") as fh:
         for sentence in conll_gen:
             for entry in sentence[1:]:
-                fh.write(str(entry) + u'\n')
-            fh.write('\n')
+                fh.write(str(entry) + "\n")
+            fh.write("\n")
 
 
-def eval(gold, predicted):
-    '''
+def evaluate(gold, predicted):
+    """
     Evaluates the output vs. gold.
     :param gold: Gold Conll file.
     :param predicted: Predicted Conll file.
     :return: Unlabeled attachment accuracy (UAS), labeled attachment accuracy (LAS).
-    '''
+    """
     correct_deps, correct_l, all_deps = 0, 0, 0
-    r2 = open(predicted, 'r')
-    for l1 in open(gold, 'r'):
-        s1 = l1.strip().split('\t')
-        s2 = r2.readline().strip().split('\t')
+    r2 = open(predicted, "r")
+    for l1 in open(gold, "r"):
+        s1 = l1.strip().split("\t")
+        s2 = r2.readline().strip().split("\t")
         if len(s1) > 6:
             if not is_punc(s2[3]):
                 all_deps += 1
@@ -138,17 +175,36 @@ def eval(gold, predicted):
     return 100 * float(correct_deps) / all_deps, 100 * float(correct_l) / all_deps
 
 
-numberRegex = re.compile("[0-9]+|[0-9]+\\.[0-9]+|[0-9]+[0-9,]+");
+numberRegex = re.compile("[0-9]+|[0-9]+\\.[0-9]+|[0-9]+[0-9,]+")
 
 
 def normalize(word):
-    return 'NUM' if numberRegex.match(word) else word.lower()
+    return "NUM" if numberRegex.match(word) else word.lower()
 
 
 def is_punc(pos):
-    return pos == '.' or pos == 'PUNC' or pos == 'PUNCT' or \
-           pos == "#" or pos == "''" or pos == "(" or \
-           pos == "[" or pos == "]" or pos == "{" or pos == "}" or \
-           pos == "\"" or pos == "," or pos == "." or pos == ":" or \
-           pos == "``" or pos == "-LRB-" or pos == "-RRB-" or pos == "-LSB-" or \
-           pos == "-RSB-" or pos == "-LCB-" or pos == "-RCB-" or pos == '"' or pos == ')'
+    return (
+        pos == "."
+        or pos == "PUNC"
+        or pos == "PUNCT"
+        or pos == "#"
+        or pos == "''"
+        or pos == "("
+        or pos == "["
+        or pos == "]"
+        or pos == "{"
+        or pos == "}"
+        or pos == '"'
+        or pos == ","
+        or pos == "."
+        or pos == ":"
+        or pos == "``"
+        or pos == "-LRB-"
+        or pos == "-RRB-"
+        or pos == "-LSB-"
+        or pos == "-RSB-"
+        or pos == "-LCB-"
+        or pos == "-RCB-"
+        or pos == '"'
+        or pos == ")"
+    )
